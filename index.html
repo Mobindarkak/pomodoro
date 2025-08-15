@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Focus Timer (25/5/15)</title>
+  </head>
+
+  <body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-300">
+    <!-- CARD -->
+    <main
+      class="relative w-[92%] max-w-md rounded-2xl border border-white/50 bg-white/70 backdrop-blur-xl shadow-[0_30px_80px_-20px_rgba(0,0,0,.35)]"
+    >
+      <div class="absolute inset-x-4 -bottom-1 h-1 rounded bg-red-500/90"></div>
+
+      <div class="px-6 pt-6 pb-8 text-center font-mono">
+        <h2 class="text-2xl tracking-wide text-red-600 font-semibold select-none">
+          Focus<span class="text-red-500">!</span>
+        </h2>
+
+        <!-- PRESETS -->
+        <div class="mt-3 mb-1 flex items-center justify-center gap-2 text-sm">
+          <button onclick="setPreset(25)" class="px-3 py-1 rounded-full bg-red-50 text-red-600 ring-1 ring-red-200 hover:bg-red-100 active:scale-95 transition">25 Focus</button>
+          <button onclick="setPreset(5)"  class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100 active:scale-95 transition">5 Break</button>
+          <button onclick="setPreset(15)" class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 ring-1 ring-blue-200 hover:bg-blue-100 active:scale-95 transition">15 Long</button>
+        </div>
+
+        <!-- PROGRESS RING -->
+        <div class="mx-auto mt-2 mb-2">
+          <div
+            id="ring"
+            class="relative size-56 mx-auto rounded-full grid place-items-center transition-all"
+            style="--p: 100%; background: conic-gradient(#ef4444 var(--p), #e5e7eb 0);"
+          >
+            <div class="size-48 rounded-full bg-white shadow-inner grid place-items-center">
+              <h1 id="timer" class="text-7xl sm:text-5xl font-extrabold text-red-600 drop-shadow select-none">25:00</h1>
+            </div>
+          </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <section class="mt-2 flex items-center justify-center gap-4">
+          <button
+            onclick="restart()" aria-label="restart" title="Restart"
+            class="group size-12 rounded-full bg-white shadow hover:shadow-lg active:scale-95 transition grid place-items-center ring-1 ring-gray-200 hover:ring-red-300"
+          >
+            <svg class="size-6 fill-gray-500 group-hover:fill-red-500" viewBox="0 -960 960 960">
+              <path d="M480-80q-75 0-140.5-28.5t-114-77q-48.5-48.5-77-114T120-440h80q0 117 81.5 198.5T480-160q117 0 198.5-81.5T760-440q0-117-81.5-198.5T480-720h-6l62 62-56 58-160-160 160-160 56 58-62 62h6q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-440q0 75-28.5 140.5t-77 114q-48.5 48.5-114 77T480-80Z"/>
+            </svg>
+          </button>
+
+          <button
+            onclick="startPause()" aria-label="pause" title="Start / Pause"
+            class="group size-12 rounded-full bg-white shadow hover:shadow-lg active:scale-95 transition grid place-items-center ring-1 ring-gray-200 hover:ring-red-300"
+          >
+            <svg class="size-6 fill-gray-500 group-hover:fill-red-500" viewBox="0 -960 960 960">
+              <path d="M560-200v-560h160v560H560Zm-320 0v-560h160v560H240Z"/>
+            </svg>
+          </button>
+
+          <button
+            onclick="skip()" aria-label="skip" title="Skip"
+            class="group size-12 rounded-full bg-white shadow hover:shadow-lg active:scale-95 transition grid place-items-center ring-1 ring-gray-200 hover:ring-red-300"
+          >
+            <svg class="size-6 fill-gray-500 group-hover:fill-red-500" viewBox="0 -960 960 960">
+              <path d="M100-240v-480l360 240-360 240Zm400 0v-480l360 240-360 240Z"/>
+            </svg>
+          </button>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      // --- STATE ---
+      let totalSeconds = 25 * 60;    // aktif preset süresinin toplamı
+      let time = totalSeconds;       // kalan süre
+      let timer = null;
+      let isRunning = false;
+
+      const $timer = document.getElementById("timer");
+      const $ring  = document.getElementById("ring");
+
+      // --- RENDER ---
+      function render() {
+        const m = String(Math.floor(time / 60)).padStart(2, "0");
+        const s = String(time % 60).padStart(2, "0");
+        $timer.textContent = `${m}:${s}`;
+
+        const pct = ((time / totalSeconds) * 100).toFixed(2) + "%";
+        $ring.style.setProperty("--p", pct);
+      }
+
+      // --- TICK ---
+      function tick() {
+        if (time > 0) {
+          time--;
+          render();
+        } else {
+          clearInterval(timer);
+          isRunning = false;
+          $timer.classList.remove("animate-pulse");
+          // İstersen burada ses veya bildirim tetikleyebiliriz.
+        }
+      }
+
+      // --- CONTROLS ---
+      function startPause() {
+        if (isRunning) {
+          clearInterval(timer);
+          isRunning = false;
+          $timer.classList.remove("animate-pulse");
+        } else {
+          timer = setInterval(tick, 1000);
+          isRunning = true;
+          $timer.classList.add("animate-pulse");
+        }
+      }
+
+      function restart() {
+        clearInterval(timer);
+        time = totalSeconds;
+        isRunning = false;
+        $timer.classList.remove("animate-pulse");
+        render();
+      }
+
+      function skip() {
+        clearInterval(timer);
+        time = 0;
+        isRunning = false;
+        $timer.classList.remove("animate-pulse");
+        render();
+      }
+
+      // --- PRESETS ---
+      function setPreset(min) {
+        clearInterval(timer);
+        totalSeconds = min * 60;
+        time = totalSeconds;
+        isRunning = false;
+        $timer.classList.remove("animate-pulse");
+        render();
+      }
+
+      // initial
+      setPreset(25);
+    </script>
+  </body>
+</html>
